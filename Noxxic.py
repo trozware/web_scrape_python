@@ -18,11 +18,11 @@ def simple_get(url):
 				return resp.content
 			else:
 				return None
-
+				
 	except RequestException as e:
 		log_error('Error during requests to {0} : {1}'.format(url, str(e)))
 		return None
-
+		
 def is_good_response(resp):
 	"""
 	Returns true if the response seems to be HTML, false otherwise
@@ -34,21 +34,22 @@ def is_good_response(resp):
 
 def log_error(e):
 	"""
-	It is always a good idea to log errors.
+	It is always a good idea to log errors. 
 	This function just prints them, but you can
 	make it do anything.
 	"""
 	print(e)
-
+	
 def get_classes():
 	"""
-	list all the classes in Noxxic
+	list all the classes in Noxxic 
 	Class name -> 1 blank line -> specs -> 2 blank lines
 	"""
+		
 	url = 'http://www.noxxic.com/wow/'
 	response = simple_get(url)
 	class_specs = []
-
+	
 	if response is not None:
 		html = BeautifulSoup(response, 'html.parser')
 		class_menu = html.select('ul .dr')[0]
@@ -57,7 +58,7 @@ def get_classes():
 			in_submenu = False
 			blank_counter = 0
 			class_name = ''
-
+			
 			for entry in menu_text.split('\n'):
 				next_entry = entry.strip()
 				if next_entry == '':
@@ -78,7 +79,7 @@ def get_classes():
 					class_specs.append({'classname': class_name})
 					class_specs[-1]['specs'] = []
 					blank_counter = 0
-
+					
 	return class_specs
 
 def get_stats_noxxic(classname, spec):
@@ -87,14 +88,13 @@ def get_stats_noxxic(classname, spec):
 	spec: convert to lower case, replace space with dash
 	find the first bubble string to retrive suggested spec priority
 	"""
-	print(classname, spec)
-
-	url_class = classname.lower().replace(' ', '-')
+	
+	url_class = classname.lower().replace(' ', '-')	
 	url_spec = spec.lower().replace(' ', '-')
-
+	
 	url = 'http://www.noxxic.com/wow/pve/%s/%s/stat-priority/' % (url_class, url_spec)
 	response = simple_get(url)
-
+	
 	if response is not None:
 		html = BeautifulSoup(response, 'html.parser')
 		stats = html.select('.bubble-string')[0]
@@ -103,21 +103,77 @@ def get_stats_noxxic(classname, spec):
 			stats_lines = stats.text.replace(' > ', '\n').split('\n')
 			return stats_lines
 	return []
+	
+def strip_talent(spec, talent):
+	talent = talent.strip()
+	if talent == 'Guardian Of Elune' or talent == 'Elemental Blast':
+		return talent
+	if talent.startswith(spec + ' '):
+		talent = talent.replace(spec + ' ', '')
+	return talent
+	
+def get_talents_noxxic(classname, spec):
+	"""
+	classname: convert to lower case, replace space with dash
+	spec: convert to lower case, replace space with dash
+	find the nxc-wow-main-build and then 
+	find the selected entries in to to get the suggested talents
+	"""
 
+	url_class = classname.lower().replace(' ', '-')	
+	url_spec = spec.lower().replace(' ', '-')
+	
+	url = 'http://www.noxxic.com/wow/pve/%s/%s/spec-builds-talents/' % (url_class, url_spec)
+	response = simple_get(url)
+	
+	if response is not None:
+		html = BeautifulSoup(response, 'html.parser')
+		talents = html.select('.nxc-wow-main-build')[0]
+		if talents is not None:
+			selected_talents = [strip_talent(spec, t.string) for t  in talents.select('.selected')]
+			print(selected_talents)
+			return selected_talents
+	return []
+
+	
 classes = get_classes()
 
 for c in range(0, len(classes)):
 	class_name = classes[c]['classname']
 	for s in range(0, len(classes[c]['specs'])):
 		spec = classes[c]['specs'][s]
+		print(class_name, spec['name'])
+
 		stats = get_stats_noxxic(class_name, spec['name'])
+		talents = get_talents_noxxic(class_name, spec['name'])
 		classes[c]['specs'][s]['priorities'] = stats
-
-
-classes_json = json.dumps(classes)
+		classes[c]['specs'][s]['talents'] = talents
+		
+classes_json = json.dumps(classes, indent=2)
 print(classes_json)
 
-save_file = 'class_stats.json'
+save_file = '/Users/sarah/Desktop/class_stats.json'
 f = open(save_file, 'w')
 f.write(classes_json)
+f.write(html)
 f.close()
+
+# Errors without trim:
+#####################
+# Havoc Soul Rending
+# Balance Guardian Affinity
+# Feral Balance Affinity
+# Feral Soul Of The Forest
+# Feral Moment Of Clarity
+# Restoration Guardian Affinity
+# Beast Mastery A Murder Of Crows
+# Holy Divine Purpose
+# Shadow Mindbender
+# Enhancement Ascendance
+
+
+# Errors with trim:
+###################
+# Guardian Of Elune
+# Elemental Blast
+
