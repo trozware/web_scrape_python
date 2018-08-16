@@ -105,24 +105,22 @@ def get_stats_noxxic(classname, spec):
 	return []
 	
 def strip_talent(spec, talent):
-	"""
-	For some talents, the name of the spec is included at the start.
-	Mostly, this can be striped but there are a couple where the 
-	spec name is actually the first word of the talent.
-	"""
 	talent = talent.strip()
-	if talent == 'Guardian Of Elune' or talent == 'Elemental Blast':
-		return talent
+	if (talent == 'Guardian Of Elune' or talent == 'Elemental Blast'
+		or talent == 'Galactic Guardian' or talent == 'Storm Elemental'):
+			return talent
 	if talent.startswith(spec + ' '):
 		talent = talent.replace(spec + ' ', '')
+	if talent.endswith(' ' + spec):
+		talent = talent.replace(' ' + spec, '')
 	return talent
 	
 def get_talents_noxxic(classname, spec):
 	"""
 	classname: convert to lower case, replace space with dash
 	spec: convert to lower case, replace space with dash
-	find the nxc-wow-main-build class and then 
-	find the selected entries to to get the suggested talents
+	find the nxc-wow-main-build and then 
+	find the selected entries in to to get the suggested talents
 	"""
 
 	url_class = classname.lower().replace(' ', '-')	
@@ -157,8 +155,37 @@ for c in range(0, len(classes)):
 classes_json = json.dumps(classes, indent=2)
 print(classes_json)
 
-save_file = 'class_stats.json'
+save_file = '/Users/sarah/Desktop/class_stats.json'
 f = open(save_file, 'w')
 f.write(classes_json)
-f.write(html)
 f.close()
+
+# Errors without trim:
+#####################
+# Havoc Soul Rending
+# Balance Guardian Affinity
+# Feral Balance Affinity
+# Feral Soul Of The Forest
+# Feral Moment Of Clarity
+# Restoration Guardian Affinity
+# Beast Mastery A Murder Of Crows
+# Holy Divine Purpose
+# Shadow Mindbender
+# Enhancement Ascendance
+
+# Guardian Affinity Balance
+# Soul Of The Forest Guardian
+# Balance Affinity Restoration
+# Rushing Jade Wind Brewmaster
+# Fist Of Justice Retribution
+# Mindbender Shadow
+# Totem Mastery Elemental
+
+
+# Errors with trim:
+###################
+# Galactic Guardian
+# Guardian Of Elune
+# Elemental Blast
+# Storm Elemental
+
